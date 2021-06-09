@@ -1,0 +1,13 @@
+[en]
+  title = "Rurumi's site"
+  languageName = "English"
+  weight = 1
+  languagedir = "ltr"
+  contentdir = "content/en"
+
+[zhtw]
+  title = "Rurumi's site"
+  languageName = "繁中"
+  weight = 2
+  languagedir = "ltr"
+  contentdir = "content/zhtw"

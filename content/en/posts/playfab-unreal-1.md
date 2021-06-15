@@ -1,151 +1,71 @@
 ---
-title: Markdown Syntax Guide
+title: 在PlayFab 上建立Unreal dedicated server (1)
 date: 2021-06-10T23:23:11+08:00
-description: Sample article showcasing basic Markdown syntax and formatting for HTML elements.
-draft: true
-hideToc: false
+description: 使用微軟PlayFab在世界各地建立你的多人對戰伺服器，並透過內建的配對機制幫助玩家找到適合的對手及隊友。
+draft: false
 enableToc: true
 enableTocContent: true
-author: Choi
-authorEmoji: 🤖
 tags:
-- markdown
-- css
-- html
-- themes
+- unreal
+- playfab
 categories:
-- themes
-- syntax
+- 
 series:
-- Themes Guide
-image: images/feature1/markdown.png
+- 
+image: images/feature2/mathbook.png
 ---
 
-This article offers a sample of basic Markdown syntax that can be used in Hugo content files, also it shows whether basic HTML elements are decorated with CSS in a Hugo theme.
+本文會著重在環境的建立及一些相關設定，不會涉及多人連線的設計和太多的程式。主要就是用來記錄在PlayFab 使用的過程中遇到的一些問題及處理。
 <!--more-->
 
-## Headings
+## 多人連線種類
+這裡的多人連線指多個玩家共同加入一個房間的遊戲類型，連線架構大致分為dedicated server 及非dedicated server。
+非dedicated server 的部分因為有很多細分，這邊叫他master client 並且簡單帶過因為這不是本文重點。
 
-The following HTML `<h1>`—`<h6>` elements represent six levels of section headings. `<h1>` is the highest section level while `<h6>` is the lowest.
+### Master client
+由多個client 中挑出一位當master client，負責遊戲中主要的邏輯判斷及驗證，其他client 可能需要透過master client 才能和其他人溝通。
 
-# H1
-## H2
-### H3
-#### H4
-##### H5
-###### H6
+優點是相對容易實作，只要client 間互相知道IP即可連線；另一個優點是費用，因為沒有真正的<mark>server</mark> 所以應該會比較便宜。
+缺點也因為只有client 端所以無法確保公平性(當然還是有一些方法例如client 之間互相檢驗等)，在需要高度競爭遊戲用這種方法要非常小心，但party game 等類型則很適合。
 
-## Paragraph
+### Dedicated server
+所有玩家連線進入一個獨立的server 負責處理遊戲中所有實際上發生的邏輯，而client 只負責把server 運算結果呈現在畫面上，以及告訴server 玩家的操作。
 
-Xerum, quo qui aut unt expliquam qui dolut labo. Aque venitatiusda cum, voluptionse latur sitiae dolessi aut parist aut dollo enim qui voluptate ma dolestendit peritin re plis aut quas inctum laceat est volestemque commosa as cus endigna tectur, offic to cor sequas etum rerum idem sintibus eiur? Quianimin porecus evelectur, cum que nis nust voloribus ratem aut omnimi, sitatur? Quiatem. Nam, omnis sum am facea corem alique molestrunt et eos evelece arcillit ut aut eos eos nus, sin conecerem erum fuga. Ri oditatquam, ad quibus unda veliamenimin cusam et facea ipsamus es exerum sitate dolores editium rerore eost, temped molorro ratiae volorro te reribus dolorer sperchicium faceata tiustia prat.
+優點是你可以完全控制整個server 的環境以及執行的程式，client 端不容易作弊。在後續要給玩家金幣、升級等等獎勵也相對安全。
+缺點是貴和費工(多一份server 專用的程式、server 端的環境架設等等)。正是因為這些麻煩的步驟催生出本文來記錄這些事情。
+> 多寫一個dedicated server 專用的程式不一定比寫master client 費工。
+> 以Unreal Engine 為例，因為dedicated server 通常與client 是同一個project 產生出來的，只要設定不同的build target 即可，所以即使server 是獨立的程式也不用完全重新寫一次server 專用的遊戲邏輯。
 
-Itatur? Quiatae cullecum rem ent aut odis in re eossequodi nonsequ idebis ne sapicia is sinveli squiatum, core et que aut hariosam ex eat.
+## Dedicated server 要架在哪？
+一般遊戲server 需求通常包含auto scale、matchmaking 以及authentication。
+提供這些功能的主要有兩家服務：
+* Amazon GameLift
+* Microsoft PlayFab
 
-## Blockquotes
+你可以透過他們上傳你的server 程式，在玩家登入並配對成功後動態產生新的server instance 讓玩家連入。
 
-The blockquote element represents content that is quoted from another source, optionally with a citation which must be within a `footer` or `cite` element, and optionally with in-line changes such as annotations and abbreviations.
+玩家連入dedicated server 大致的流程為：
+1. 玩家在client 端登入並透過matchmaking 尋找隊友、對手
+2. 動態產生新的server
+3. 讓玩家知道連線位址並連入
+4. Dedicated server 驗證連入client 的身份後，賦予其在資料庫上記錄的角色裝備、狀態
+5. 遊戲結束後，dedicated server 上傳戰鬥結果給後端server 計算獎勵並寫入資料庫
 
-#### Blockquote without attribution
+### 為什麼選PlayFab？
 
-> Tiam, ad mint andaepu dandae nostion secatur sequo quae.
-> **Note** that you can use *Markdown syntax* within a blockquote.
+其實我兩家都試過，相比之下PlayFab 整合得更大包，對於規模較小沒辦法花太多時間在server 端基礎建設的開發團隊來說其實不錯。
+                PlayFab | GameLift
+------------------------|----------------------
+每個月免費750 core hours[^1] | Free tier 125小時[^2]
+內建authentication | 可透過Amazon Cognito
+內建player item 及currency | 可透過Amazon DynamoDB
+內建matchmaking，但本文寫的時候還在preview[^3] | 內建FlexMatch
 
-#### Blockquote with attribution
+[^1]: PlayFab 每月免費750 core hours，但是最小的VM 也要2個 cores
+[^2]: AWS free tier 只有註冊的前12個月才有
+[^3]: PlayFab matchmaking 本文寫的時候還在preview
 
-> Don't communicate by sharing memory, share memory by communicating.</p>
-> — <cite>Rob Pike[^1]</cite>
 
+但不得不說GameLift 的文件比較多且完整。本文就是紀錄我使用PlayFab 一路跌跌撞撞到終於可以把Unreal dedicated server 在VM 裡面執行起來並讓玩家連入的過程。
 
-[^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.
-
-## Tables
-
-Tables aren't part of the core Markdown spec, but Hugo supports supports them out-of-the-box.
-
-   Name | Age
---------|------
-    Bob | 27
-  Alice | 23
-
-#### Inline Markdown within tables
-
-| Inline&nbsp;&nbsp;&nbsp;     | Markdown&nbsp;&nbsp;&nbsp;  | In&nbsp;&nbsp;&nbsp;                | Table      |
-| ---------- | --------- | ----------------- | ---------- |
-| *italics*  | **bold**  | ~~strikethrough~~&nbsp;&nbsp;&nbsp; | `code`     |
-
-## Code Blocks
-
-#### Code block with backticks
-
-```
-html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Example HTML5 Document</title>
-</head>
-<body>
-  <p>Test</p>
-</body>
-</html>
-```
-#### Code block indented with four spaces
-
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Example HTML5 Document</title>
-    </head>
-    <body>
-      <p>Test</p>
-    </body>
-    </html>
-
-#### Code block with Hugo's internal highlight shortcode
-{{< highlight html >}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Example HTML5 Document</title>
-</head>
-<body>
-  <p>Test</p>
-</body>
-</html>
-{{< /highlight >}}
-
-## List Types
-
-#### Ordered List
-
-1. First item
-2. Second item
-3. Third item
-
-#### Unordered List
-
-* List item
-* Another item
-* And another item
-
-#### Nested list
-
-* Item
-1. First Sub-item
-2. Second Sub-item
-
-## Other Elements — abbr, sub, sup, kbd, mark
-
-<abbr title="Graphics Interchange Format">GIF</abbr> is a bitmap image format.
-
-H<sub>2</sub>O
-
-X<sup>n</sup> + Y<sup>n</sup>: Z<sup>n</sup>
-
-Press <kbd><kbd>CTRL</kbd>+<kbd>ALT</kbd>+<kbd>Delete</kbd></kbd> to end the session.
-
-Most <mark>salamanders</mark> are nocturnal, and hunt for insects, worms, and other small creatures.
-
+待續。

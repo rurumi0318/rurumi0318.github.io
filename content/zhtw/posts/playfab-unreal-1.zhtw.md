@@ -2,7 +2,7 @@
 title: 在PlayFab 上建立Unreal dedicated server (1)
 date: 2021-06-10T23:23:11+08:00
 description: 使用微軟PlayFab在世界各地建立你的多人對戰伺服器，並透過內建的配對機制幫助玩家找到適合的對手及隊友。
-draft: true
+draft: false
 enableToc: true
 enableTocContent: true
 tags:

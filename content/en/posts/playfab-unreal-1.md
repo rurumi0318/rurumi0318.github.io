@@ -25,7 +25,7 @@ image: images/feature2/mathbook.png
 ### Master client
 由多個client 中挑出一位當master client，負責遊戲中主要的邏輯判斷及驗證，其他client 可能需要透過master client 才能和其他人溝通。
 
-優點是相對容易實作，只要client 間互相知道IP即可連線；另一個優點是費用，因為沒有真正的<mark>server</mark> 所以應該會比較便宜。
+優點是相對容易實作，只要client 間互相知道IP即可連線；另一個優點是費用，因為沒有真正的**server** 所以應該會比較便宜。
 缺點也因為只有client 端所以無法確保公平性(當然還是有一些方法例如client 之間互相檢驗等)，在需要高度競爭遊戲用這種方法要非常小心，但party game 等類型則很適合。
 
 ### Dedicated server
@@ -38,7 +38,7 @@ image: images/feature2/mathbook.png
 
 ## Dedicated server 要架在哪？
 一般遊戲server 需求通常包含auto scale、matchmaking 以及authentication。
-提供這些功能的主要有兩家服務：
+目前市面上有兩家很大的服務商提供這些功能：
 * Amazon GameLift
 * Microsoft PlayFab
 
@@ -54,9 +54,10 @@ image: images/feature2/mathbook.png
 ### 為什麼選PlayFab？
 
 其實我兩家都試過，相比之下PlayFab 整合得更大包，對於規模較小沒辦法花太多時間在server 端基礎建設的開發團隊來說其實不錯。
+但GameLift 的文件比較完整，網路社群上的教學也比較多。PlayFab 的文件也是很多，但是真的用起來很難一步一步帶你把事情做好。本文就是紀錄我使用PlayFab 架起Unreal dedicated server 並讓玩家連入的過程。
                 PlayFab | GameLift
 ------------------------|----------------------
-每個月免費750 core hours[^1] | Free tier 125小時[^2]
+每個月免費750 core hours[^1] | Free tier 每個月125小時[^2]
 內建authentication | 可透過Amazon Cognito
 內建player item 及currency | 可透過Amazon DynamoDB
 內建matchmaking，但本文寫的時候還在preview[^3] | 內建FlexMatch
@@ -64,8 +65,3 @@ image: images/feature2/mathbook.png
 [^1]: PlayFab 每月免費750 core hours，但是最小的VM 也要2個 cores
 [^2]: AWS free tier 只有註冊的前12個月才有
 [^3]: PlayFab matchmaking 本文寫的時候還在preview
-
-
-但不得不說GameLift 的文件比較多且完整。本文就是紀錄我使用PlayFab 一路跌跌撞撞到終於可以把Unreal dedicated server 在VM 裡面執行起來並讓玩家連入的過程。
-
-待續。
